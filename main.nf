@@ -55,37 +55,6 @@ vcf = file(params.vcf)
 // Reference fasta file.
 reference = file(params.reference)
 
-// Extract sample names from VCF.
-process get_sample_names {
-    output:
-    file "samples.txt" into vcf_sample_names_ch
-
-    script:
-    """
-    # Get the line of the VCF containing the sample names.
-    grep -m 1 "^#CHROM" $vcf > "header_line.txt"
-    # Get the sample names in one line.
-    cat "header_line.txt" | awk '{print substr(\$0, index(\$0,\$10))}' > "samples_line.txt"
-    # Make a file with one line per sample name.
-    cat "samples_line.txt" | tr -s '\t' '\n' > "samples.txt"
-    """
-}
-
-// Convert this channel from a file with sample names, to a channel with one item per sample name.
-vcf_sample_names_ch
-    .splitText()
-    .map { it.trim() }
-    .into { vcf_sample_names_check_ch; vcf_sample_names_split_ch }
-
-//vcf_sample_names_check_ch.subscribe { println it }
-//vcf_sn = vcf_sample_names_check_ch.collect()
-//bam_sn = bam_sample_names_ch.toList().toSet()
-//println "${vcf_sn.getClass()}"
-//print "${vcf_sn}"
-//intersect_size = vcf_sn.intersect(bam_sn).size()
-//union_size = vcf_sn.union(bam_sn).size()
-//assert vcf_sn == bam_sn, "error"
-
 // Extract a single sample from the VCF. This process is run once for each sample, splitting the
 // VCF into as many files as there are samples.
 // --remove-unused-alternates is used to avoid gentypes like "2/3", which HapCUT2 can't deal with.
@@ -94,7 +63,7 @@ vcf_sample_names_ch
 // the samples are merged together, everything will be the same again.
 process get_sample_vcf {
     input:
-    val sample from vcf_sample_names_split_ch
+    val sample from bam_sample_names_ch
 
     output:
     //set sample, file("sample.vcf") into vcf_extract_ch, vcf_link_ch, vcf_phase_ch
@@ -105,7 +74,7 @@ process get_sample_vcf {
     mkdir tmp
     gatk SelectVariants \
         -V $vcf \
-        -R $reference_fa \
+        -R $reference \
         -sn $sample \
         --remove-unused-alternates \
         -O "sample.vcf" \
