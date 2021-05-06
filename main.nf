@@ -7,7 +7,6 @@ Author: Ólavur Mortensen <olavur@fargen.fo>
 params.bam_paths = null
 params.vcf = null
 params.reference = null
-params.interval = null
 params.outdir = null
 params.help = false
 
@@ -27,7 +26,6 @@ if (params.help){
 // Make sure necessary input parameters are assigned.
 assert params.bam_paths != null, 'Input parameter "bam_paths" cannot be unasigned.'
 assert params.vcf != null, 'Input parameter "vcf" cannot be unasigned.'
-assert params.interval != null, 'Input parameter "interval" cannot be unasigned.'
 assert params.reference != null, 'Input parameter "reference" cannot be unasigned.'
 assert params.outdir != null, 'Input parameter "outdir" cannot be unasigned.'
 
@@ -35,7 +33,6 @@ println "P I P E L I N E     I P U T S    "
 println "================================="
 println "bam_paths          : ${params.bam_paths}"
 println "vcf                : ${params.vcf}"
-println "interval           : ${params.interval}"
 println "reference          : ${params.reference}"
 println "outdir             : ${params.outdir}"
 
@@ -114,7 +111,7 @@ process extract_hairs {
 
     script:
     """
-    extractHAIRS --10X 1 --region $params.interval --bam $bam --VCF $vcf --out "unlinked_fragment"
+    extractHAIRS --10X 1 --bam $bam --VCF $vcf --out "unlinked_fragment"
     """
 }
 
