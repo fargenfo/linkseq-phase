@@ -170,6 +170,8 @@ process index_and_zip_vcf {
 
 // Merge VCFs into a multi-sample VCF, and compress and index it.
 // FIXME: zip and index in separate processes.
+// FIXME: Nextflow can't deal with "0\|0", because of the backslash, so I used a double backslash,
+// but I'm not sure if this will work.
 process merge_phased_vcf {
     publishDir "${params.outdir}/phased_vcf", mode: 'copy'
 
@@ -185,7 +187,7 @@ process merge_phased_vcf {
     vcf_list_str = (vcf_list as List)
         .join(' ')  // Join paths in single string.
     """
-    vcf-merge --ref-for-missing 0\|0 $vcf_list_str > "phased_merged.vcf"
+    vcf-merge --ref-for-missing 0\\|0 $vcf_list_str > "phased_merged.vcf"
     bgzip "phased_merged.vcf" > "phased_merged.vcf.gz"
     tabix "phased_merged.vcf.gz"
     """
