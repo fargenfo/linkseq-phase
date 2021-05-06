@@ -236,36 +236,3 @@ process merge_phased_vcf {
     """
 }
 
-// Take the compressed and indexed VCF from above and join by sample name with BAM files.
-data_haplotag_ch = phased_vcf_haplotag_ch.join(small_bam_haplotag_bam_ch)
-
-// FIXME: phasing BAM is not necessary.
-// Add haplotype information to BAM, tagging each read with a haplotype (when possible), using
-// the haplotype information from the phased VCF.
-process haplotag_bam {
-    input:
-    set sample, file(phased_vcf), file(idx), file(bam), file(bai) from data_haplotag_ch
-
-    output:
-    set sample, file("phased.bam") into phased_bam_ch
-
-    script:
-    """
-    whatshap haplotag --ignore-read-groups --reference $reference_fa -o "phased.bam" $phased_vcf $bam
-    """
-}
-
-process index_bam {
-    publishDir "${params.outdir}/phased_bam/$sample", mode: 'copy'
-
-    input:
-    set sample, file(bam) from phased_bam_ch
-
-    output:
-    set sample, file("phased.bam"), file("phased.bam.bai") into indexed_phased_bam
-
-    script:
-    """
-    samtools index "phased.bam"
-    """
-}
