@@ -7,7 +7,6 @@ Author: Ólavur Mortensen <olavur@fargen.fo>
 params.bam_paths = null
 params.vcf = null
 params.reference = null
-params.targets = null
 params.threads = null
 params.mem = null
 params.HapCUT2 = null
@@ -34,7 +33,6 @@ assert params.vcf != null, 'Input parameter "vcf" cannot be unasigned.'
 assert params.HapCUT2!= null, 'Input parameter "HapCUT2" cannot be unasigned.'
 assert params.interval != null, 'Input parameter "interval" cannot be unasigned.'
 assert params.reference != null, 'Input parameter "reference" cannot be unasigned.'
-assert params.targets != null, 'Input parameter "targets" cannot be unasigned.'
 assert params.threads != null, 'Input parameter "threads" cannot be unasigned.'
 assert params.mem != null, 'Input parameter "mem" cannot be unasigned.'
 assert params.outdir != null, 'Input parameter "outdir" cannot be unasigned.'
@@ -46,7 +44,6 @@ println "vcf                : ${params.vcf}"
 println "HapCUT2            : ${params.HapCUT2}"
 println "interval           : ${params.interval}"
 println "reference          : ${params.reference}"
-println "targets            : ${params.targets}"
 println "threads            : ${params.threads}"
 println "mem                : ${params.mem}"
 println "outdir             : ${params.outdir}"
@@ -63,9 +60,8 @@ bam_sample_names_ch = bam_paths_check_ch.map { it -> it[0] }
 
 // Get file handlers for input files.
 vcf = file(params.vcf)
-reference = file(params.reference)  // Directory of 10x reference.
-reference_fa = file(params.reference + '/fasta/genome.fa')  // Reference fasta file.
-targets = file(params.targets)
+// Reference fasta file.
+reference = file(params.reference)
 
 // FIXME:
 // this is just for testing
