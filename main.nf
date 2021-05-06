@@ -229,8 +229,7 @@ process merge_phased_vcf {
     vcf_list_str = (vcf_list as List)
         .join(' ')  // Join paths in single string.
     """
-    #vcf-merge --ref-for-missing 0 $vcf_list_str | bgzip -c > "phased_merged.vcf.gz"
-    vcf-merge --ref-for-missing 0 $vcf_list_str > "phased_merged.vcf"
+    vcf-merge --ref-for-missing 0\|0 $vcf_list_str > "phased_merged.vcf"
     bgzip "phased_merged.vcf" > "phased_merged.vcf.gz"
     tabix "phased_merged.vcf.gz"
     """
