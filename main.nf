@@ -7,8 +7,6 @@ Author: Ólavur Mortensen <olavur@fargen.fo>
 params.bam_paths = null
 params.vcf = null
 params.reference = null
-params.threads = null
-params.mem = null
 params.interval = null
 params.outdir = null
 params.help = false
@@ -31,8 +29,6 @@ assert params.bam_paths != null, 'Input parameter "bam_paths" cannot be unasigne
 assert params.vcf != null, 'Input parameter "vcf" cannot be unasigned.'
 assert params.interval != null, 'Input parameter "interval" cannot be unasigned.'
 assert params.reference != null, 'Input parameter "reference" cannot be unasigned.'
-assert params.threads != null, 'Input parameter "threads" cannot be unasigned.'
-assert params.mem != null, 'Input parameter "mem" cannot be unasigned.'
 assert params.outdir != null, 'Input parameter "outdir" cannot be unasigned.'
 
 println "P I P E L I N E     I P U T S    "
@@ -41,8 +37,6 @@ println "bam_paths          : ${params.bam_paths}"
 println "vcf                : ${params.vcf}"
 println "interval           : ${params.interval}"
 println "reference          : ${params.reference}"
-println "threads            : ${params.threads}"
-println "mem                : ${params.mem}"
 println "outdir             : ${params.outdir}"
 
 // Turn the file with FASTQ paths into a channel with [sample, path] tuples.
@@ -116,7 +110,7 @@ process get_sample_vcf {
         --remove-unused-alternates \
         -O "sample.vcf" \
         --tmp-dir=tmp \
-        --java-options "-Xmx${params.mem}g -Xms${params.mem}g"
+        --java-options "-Xmx${task.memory.toGiga()}g -Xms${task.memory.toGiga()}g"
     """
 }
 
