@@ -9,7 +9,6 @@ params.vcf = null
 params.reference = null
 params.threads = null
 params.mem = null
-params.HapCUT2 = null
 params.interval = null
 params.outdir = null
 params.help = false
@@ -30,7 +29,6 @@ if (params.help){
 // Make sure necessary input parameters are assigned.
 assert params.bam_paths != null, 'Input parameter "bam_paths" cannot be unasigned.'
 assert params.vcf != null, 'Input parameter "vcf" cannot be unasigned.'
-assert params.HapCUT2!= null, 'Input parameter "HapCUT2" cannot be unasigned.'
 assert params.interval != null, 'Input parameter "interval" cannot be unasigned.'
 assert params.reference != null, 'Input parameter "reference" cannot be unasigned.'
 assert params.threads != null, 'Input parameter "threads" cannot be unasigned.'
@@ -41,7 +39,6 @@ println "P I P E L I N E     I P U T S    "
 println "================================="
 println "bam_paths          : ${params.bam_paths}"
 println "vcf                : ${params.vcf}"
-println "HapCUT2            : ${params.HapCUT2}"
 println "interval           : ${params.interval}"
 println "reference          : ${params.reference}"
 println "threads            : ${params.threads}"
@@ -212,7 +209,6 @@ process index_and_zip_vcf {
 }
 
 // Merge VCFs into a multi-sample VCF, and compress and index it.
-// FIXME: ref-for-missing should be 0\|0, as I've done when merging the HBOC data.
 // FIXME: zip and index in separate processes.
 process merge_phased_vcf {
     publishDir "${params.outdir}/phased_vcf", mode: 'copy'
