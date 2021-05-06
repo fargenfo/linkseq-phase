@@ -67,11 +67,6 @@ reference = file(params.reference)  // Directory of 10x reference.
 reference_fa = file(params.reference + '/fasta/genome.fa')  // Reference fasta file.
 targets = file(params.targets)
 
-// TODO: this is temporary, HapCUT2 should be installed properly, and this should not be necessary.
-HAPCUT2 = params.HapCUT2 + "/build/HAPCUT2"
-extractHAIRS = params.HapCUT2 + "/build/extractHAIRS"
-LinkFragments = params.HapCUT2 + "/utilities/LinkFragments.py"
-
 // FIXME:
 // this is just for testing
 process make_small_bam {
@@ -180,7 +175,7 @@ process extract_hairs {
 
     script:
     """
-    $extractHAIRS --10X 1 --region $params.interval --bam $bam --VCF $vcf --out "unlinked_fragment"
+    extractHAIRS --10X 1 --region $params.interval --bam $bam --VCF $vcf --out "unlinked_fragment"
     """
 }
 
@@ -197,7 +192,7 @@ process link_fragments {
 
     script:
     """
-    python3 $LinkFragments --bam $bam --VCF $vcf --fragments $unlinked_fragments --out "linked_fragments"
+    LinkFragments --bam $bam --VCF $vcf --fragments $unlinked_fragments --out "linked_fragments"
     """
 }
 
@@ -215,12 +210,13 @@ process phase_vcf {
 
     script:
     """
-    $HAPCUT2 --nf 1 --outvcf 1 --fragments $linked_fragments --VCF $vcf --output "haplotypes"
+    HAPCUT2 --nf 1 --outvcf 1 --fragments $linked_fragments --VCF $vcf --output "haplotypes"
     """
 }
 
 
 // Compress and index VCF.
+// FIXME: zip and index in separate processes.
 process index_and_zip_vcf {
     input:
     set sample, file(vcf) from phased_vcf_ch
@@ -237,6 +233,8 @@ process index_and_zip_vcf {
 }
 
 // Merge VCFs into a multi-sample VCF, and compress and index it.
+// FIXME: ref-for-missing should be 0\|0, as I've done when merging the HBOC data.
+// FIXME: zip and index in separate processes.
 process merge_phased_vcf {
     publishDir "${params.outdir}/phased_vcf", mode: 'copy'
 
@@ -262,6 +260,7 @@ process merge_phased_vcf {
 // Take the compressed and indexed VCF from above and join by sample name with BAM files.
 data_haplotag_ch = phased_vcf_haplotag_ch.join(small_bam_haplotag_bam_ch)
 
+// FIXME: phasing BAM is not necessary.
 // Add haplotype information to BAM, tagging each read with a haplotype (when possible), using
 // the haplotype information from the phased VCF.
 process haplotag_bam {
