@@ -58,26 +58,11 @@ bam_paths_ch
 // Map this channel to just the sample names.
 bam_sample_names_ch = bam_paths_check_ch.map { it -> it[0] }
 
-// Get file handlers for input files.
+// Input multi sample VCF file.
 vcf = file(params.vcf)
+
 // Reference fasta file.
 reference = file(params.reference)
-
-// FIXME:
-// this is just for testing
-process make_small_bam {
-    input:
-    set sample, file(bam), file(bai) from bam_paths_process_ch
-
-    output:
-    set sample, file("small.bam"), file("small.bam.bai") into small_bam_ch, small_bam_haplotag_bam_ch
-
-    script:
-    """
-    samtools view -b -o "small.bam" -T $reference_fa $bam $params.interval
-    samtools index -b "small.bam"
-    """
-}
 
 // Extract sample names from VCF.
 process get_sample_names {
@@ -110,7 +95,6 @@ vcf_sample_names_ch
 //union_size = vcf_sn.union(bam_sn).size()
 //assert vcf_sn == bam_sn, "error"
 
-// FIXME: -L option only for testing
 // Extract a single sample from the VCF. This process is run once for each sample, splitting the
 // VCF into as many files as there are samples.
 // --remove-unused-alternates is used to avoid gentypes like "2/3", which HapCUT2 can't deal with.
@@ -132,7 +116,6 @@ process get_sample_vcf {
         -V $vcf \
         -R $reference_fa \
         -sn $sample \
-        -L ${params.interval} \
         --remove-unused-alternates \
         -O "sample.vcf" \
         --tmp-dir=tmp \
@@ -159,7 +142,7 @@ process remove_nocalls {
 vcf_ch = vcf_nocalls_removed_ch
 
 // Make a channel with (sample ID, VCF, VCF index, BAM, BAM index) tuples.
-vcf_ch.join(small_bam_ch).into { data_extract_ch; data_link_ch; data_phase_ch }
+vcf_ch.join(bam_paths_process_ch).into { data_extract_ch; data_link_ch; data_phase_ch }
 
 // Convert BAM file to the compact fragment file format containing only haplotype-relevant information.
 process extract_hairs {
