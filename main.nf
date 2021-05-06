@@ -128,7 +128,7 @@ process link_fragments {
 
     script:
     """
-    LinkFragments --bam $bam --VCF $vcf --fragments $unlinked_fragments --out "linked_fragments"
+    LinkFragments.py --bam $bam --VCF $vcf --fragments $unlinked_fragments --out "linked_fragments"
     """
 }
 
