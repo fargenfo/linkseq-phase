@@ -64,7 +64,7 @@ process get_sample_vcf {
 
     output:
     //set sample, file("sample.vcf") into vcf_extract_ch, vcf_link_ch, vcf_phase_ch
-    set sample, file("sample.vcf"), file("sample.vcf.idx") into vcf_ch
+    set sample, file("sample.vcf"), file("sample.vcf.idx") into vcf_sample_ch
 
     script:
     """
@@ -80,11 +80,26 @@ process get_sample_vcf {
     """
 }
 
+process reformat_vcf {
+    input:
+    set sample, file(vcf), file(idx) from vcf_sample_ch
+
+    output:
+    set sample, file("reformat.vcf.gz"), file("reformat.vcf.gz.tbi") into vcf_reformat_ch
+
+    script:
+    """
+    remove_format_field.py --vcf $vcf --field PP > reformat.vcf
+    bgzip -c reformat.vcf > reformat.vcf.gz
+    tabix reformat.vcf.gz
+    """
+}
+
 // FIXME:
 // this is temporary, another solution needed.
 process remove_nocalls {
     input:
-    set sample, file(vcf), file(idx) from vcf_ch
+    set sample, file(vcf), file(idx) from vcf_reformat_ch
 
     output:
     set sample, file("nocalls_removed.vcf"), file("nocalls_removed.vcf.idx") into vcf_nocalls_removed_ch
@@ -96,10 +111,9 @@ process remove_nocalls {
     gatk IndexFeatureFile -F "nocalls_removed.vcf"
     """
 }
-vcf_ch = vcf_nocalls_removed_ch
 
 // Make a channel with (sample ID, VCF, VCF index, BAM, BAM index) tuples.
-vcf_ch.join(bam_paths_process_ch).into { data_extract_ch; data_link_ch; data_phase_ch }
+vcf_nocalls_removed_ch.join(bam_paths_process_ch).into { data_extract_ch; data_link_ch; data_phase_ch }
 
 // Convert BAM file to the compact fragment file format containing only haplotype-relevant information.
 process extract_hairs {
