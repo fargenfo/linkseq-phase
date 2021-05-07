@@ -195,8 +195,8 @@ process merge_phased_vcf {
     val vcf_list from phased_vcf_merge_ch.toList()
 
     output:
-    //set file("phased_merged.vcf.gz"), file("phased_merged.vcf.gz.tbi") into phased_merged_ch
-    set file("phased_merged.vcf.gz") into phased_merged_ch
+    file("phased_merged.vcf.gz")
+    file("phased_merged.vcf.gz.tbi")
 
     script:
     // Prepare input string for vcf-merge.
