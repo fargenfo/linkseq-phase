@@ -88,29 +88,25 @@ process reformat_vcf {
     set sample, file(vcf), file(idx) from vcf_sample_ch
 
     output:
-    set sample, file("reformat.vcf.gz"), file("reformat.vcf.gz.tbi") into vcf_reformat_ch
+    set sample, file("reformat.vcf") into vcf_reformat_ch
 
     script:
     """
     remove_format_field.py --vcf $vcf --field PP > reformat.vcf
-    bgzip -c reformat.vcf > reformat.vcf.gz
-    tabix reformat.vcf.gz
     """
 }
 
-// FIXME:
-// this is temporary, another solution needed.
+// FIXME: is indexing necessary?
 process remove_nocalls {
     input:
-    set sample, file(vcf), file(idx) from vcf_reformat_ch
+    set sample, file(vcf) from vcf_reformat_ch
 
     output:
     set sample, file("nocalls_removed.vcf"), file("nocalls_removed.vcf.idx") into vcf_nocalls_removed_ch
 
     script:
     """
-    # The grep pattern below searches for two different patterns: ./. and .|.
-    zcat $vcf | grep -v "\\./\\.\\|\\.|\\." > "nocalls_removed.vcf"
+    remove_nocall_sites.py --vcf $vcf > nocalls_removed.vcf
     gatk IndexFeatureFile -F "nocalls_removed.vcf"
     """
 }
