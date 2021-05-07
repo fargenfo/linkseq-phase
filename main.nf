@@ -168,7 +168,6 @@ process phase_vcf {
 
 
 // Compress and index VCF.
-// FIXME: zip and index in separate processes.
 process index_and_zip_vcf {
     input:
     set sample, file(vcf) from phased_vcf_ch
