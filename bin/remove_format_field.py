@@ -5,13 +5,23 @@ import sys, argparse, logging
 logging.basicConfig(level=logging.INFO)
 
 # Initilize argument parser.
-parser = argparse.ArgumentParser(description='Render Jinja2 template.')
+description = '''Remove a field from the FORMAT of a VCF file.
+
+For example, if you remove "DP", the FORMAT line in the header with ID=DP will be removed, and
+the FORMAT of all variants with this field will be updated.
+
+Say the FORMAT of a variant is as follows: GT:DP:AD. Then the new FORMAT is GT:AD.
+If a sample has genotype 0/1:40:18, then the new value will be 0/1:18.
+
+Only one field may be supplied
+'''
+parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawDescriptionHelpFormatter)
 
 # Add the arguments.
-parser.add_argument('--vcf', type=str,
-        help='Path to VCF file.')
-parser.add_argument('--field', type=str,
-        help='Name of field to remove from format.')
+parser.add_argument('--vcf', type=str, required=True,
+        help='Path to VCF file. Not compressed.')
+parser.add_argument('--field', type=str, required=True,
+        help='Name of field to remove from format. For example "DP".')
 
 # Parse script input arguments.
 args = parser.parse_args()
