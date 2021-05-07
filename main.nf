@@ -80,6 +80,9 @@ process get_sample_vcf {
     """
 }
 
+// Remove the "PP" field from the VCF.
+// PP is the posterior probability of the possible genotypes, calculated by GATK's CalculateGenotypePosteriors.
+// VCFtools doesn't know how to merge this field, and raises an error, therefore we remove it here.
 process reformat_vcf {
     input:
     set sample, file(vcf), file(idx) from vcf_sample_ch
