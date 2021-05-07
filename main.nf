@@ -102,12 +102,11 @@ process remove_nocalls {
     set sample, file(vcf) from vcf_reformat_ch
 
     output:
-    set sample, file("nocalls_removed.vcf"), file("nocalls_removed.vcf.idx") into vcf_nocalls_removed_ch
+    set sample, file("nocalls_removed.vcf") into vcf_nocalls_removed_ch
 
     script:
     """
     remove_nocall_sites.py --vcf $vcf > nocalls_removed.vcf
-    gatk IndexFeatureFile -F "nocalls_removed.vcf"
     """
 }
 
@@ -119,7 +118,7 @@ vcf_nocalls_removed_ch.join(bam_paths_process_ch).into { data_extract_ch; data_l
 // Convert BAM file to the compact fragment file format containing only haplotype-relevant information.
 process extract_hairs {
     input:
-    set sample, file(vcf), file(idx), file(bam), file(bai) from data_extract_ch
+    set sample, file(vcf), file(bam), file(bai) from data_extract_ch
 
     output:
     set sample, file("unlinked_fragment") into unlinked_fragments_ch
@@ -136,7 +135,7 @@ data_link_ch = data_link_ch.join(unlinked_fragments_ch)
 // Use LinkFragments to link fragments into barcoded molecules.
 process link_fragments {
     input:
-    set sample, file(vcf), file(idx), file(bam), file(bai), file(unlinked_fragments) from data_link_ch
+    set sample, file(vcf), file(bam), file(bai), file(unlinked_fragments) from data_link_ch
 
     output:
     set sample, file("linked_fragments") into linked_fragments_ch
@@ -153,7 +152,7 @@ data_phase_ch = data_phase_ch.join(linked_fragments_ch)
 // Use HAPCUT2 to assemble fragment file into haplotype blocks.
 process phase_vcf {
     input:
-    set sample, file(vcf), file(idx), file(bam), file(bai), file(linked_fragments) from data_phase_ch
+    set sample, file(vcf), file(bam), file(bai), file(linked_fragments) from data_phase_ch
 
     output:
     file "haplotypes" into haplotypes_ch
