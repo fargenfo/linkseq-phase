@@ -96,7 +96,8 @@ process reformat_vcf {
     """
 }
 
-// FIXME: is indexing necessary?
+// Remove no-call variants (coded as "./.") from the VCF, as HapCUT2 doesn't seem to
+// be able to handle these.
 process remove_nocalls {
     input:
     set sample, file(vcf) from vcf_reformat_ch
@@ -150,6 +151,7 @@ process link_fragments {
 data_phase_ch = data_phase_ch.join(linked_fragments_ch)
 
 // Use HAPCUT2 to assemble fragment file into haplotype blocks.
+// NOTE: this step may prune some low confidence genotypes, introducing no-calls into the dataset.
 process phase_vcf {
     input:
     set sample, file(vcf), file(bam), file(bai), file(linked_fragments) from data_phase_ch
