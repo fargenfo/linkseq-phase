@@ -185,18 +185,16 @@ process index_and_zip_vcf {
 }
 
 // Merge VCFs into a multi-sample VCF, and compress and index it.
-// FIXME: zip and index in separate processes.
 // FIXME: Nextflow can't deal with "0\|0", because of the backslash, so I used a double backslash,
 // but I'm not sure if this will work.
 process merge_phased_vcf {
-    publishDir "${params.outdir}/phased_vcf", mode: 'copy'
+    publishDir "${params.outdir}/phased_vcf", mode: 'copy', overwrite: true
 
     input:
     val vcf_list from phased_vcf_merge_ch.toList()
 
     output:
-    file("phased_merged.vcf.gz")
-    file("phased_merged.vcf.gz.tbi")
+    file("phased_merged.vcf.gz") into merged_vcf_ch
 
     script:
     // Prepare input string for vcf-merge.
@@ -205,7 +203,21 @@ process merge_phased_vcf {
     """
     vcf-merge --ref-for-missing 0\\|0 $vcf_list_str > "phased_merged.vcf"
     bgzip -c "phased_merged.vcf" > "phased_merged.vcf.gz"
-    tabix "phased_merged.vcf.gz"
     """
 }
 
+// Index merged VCF.
+process index_merged_vcf {
+    publishDir "${params.outdir}/phased_vcf", mode: 'copy', pattern: '*.vcf.gz.tbi', overwrite: true
+
+    input:
+    file(vcf) from merged_vcf_ch
+
+    output:
+    file("*.vcf.gz.tbi")
+
+    script:
+    """
+    tabix $vcf
+    """
+}
