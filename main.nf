@@ -107,13 +107,15 @@ process remove_nocalls {
     script:
     """
     # The grep pattern below searches for two different patterns: ./. and .|.
-    grep -v "\\./\\.\\|\\.|\\." $vcf > "nocalls_removed.vcf"
+    zcat $vcf | grep -v "\\./\\.\\|\\.|\\." > "nocalls_removed.vcf"
     gatk IndexFeatureFile -F "nocalls_removed.vcf"
     """
 }
 
 // Make a channel with (sample ID, VCF, VCF index, BAM, BAM index) tuples.
 vcf_nocalls_removed_ch.join(bam_paths_process_ch).into { data_extract_ch; data_link_ch; data_phase_ch }
+
+// NOTE: HapCUT2 does not accept compressed VCFs.
 
 // Convert BAM file to the compact fragment file format containing only haplotype-relevant information.
 process extract_hairs {
@@ -202,7 +204,7 @@ process merge_phased_vcf {
         .join(' ')  // Join paths in single string.
     """
     vcf-merge --ref-for-missing 0\\|0 $vcf_list_str > "phased_merged.vcf"
-    bgzip "phased_merged.vcf" > "phased_merged.vcf.gz"
+    bgzip -c "phased_merged.vcf" > "phased_merged.vcf.gz"
     tabix "phased_merged.vcf.gz"
     """
 }
