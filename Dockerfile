@@ -7,7 +7,7 @@ LABEL \
 
 RUN apt-get update -yqq && \
     apt-get install -yqq \
-    unzip \
+    unzip
 
 COPY environment.yml /
 RUN conda env create -f /environment.yml && conda clean -a
