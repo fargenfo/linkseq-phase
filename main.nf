@@ -208,7 +208,7 @@ process index_and_zip_vcf {
 // to use a pre-defined missing genotype string, but this will be the same for any variant, regardless
 // of variant genotype format and regardless of ploidy.
 process merge_phased_vcf {
-    publishDir "${params.outdir}/phased_vcf", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}", mode: 'copy', overwrite: true
 
     input:
     val vcf_list from phased_vcf_merge_ch.toList()
@@ -228,16 +228,35 @@ process merge_phased_vcf {
 
 // Index merged VCF.
 process index_merged_vcf {
-    publishDir "${params.outdir}/phased_vcf", mode: 'copy', pattern: '*.vcf.gz.tbi', overwrite: true
+    publishDir "${params.outdir}", mode: 'copy', pattern: '*.vcf.gz.tbi', overwrite: true
 
     input:
     file(vcf) from merged_vcf_ch
 
     output:
-    file("*.vcf.gz.tbi")
+    set file('*.vcf.gz'), file("*.vcf.gz.tbi") into indexed_merged_vcf_ch
 
     script:
     """
     tabix $vcf
+    """
+}
+
+// Get basic statistics about haplotype phasing blocks.
+// NOTE: provide a list of reference chromosome sizes to get N50.
+process phasing_stats {
+    publishDir "${params.outdir}", mode: 'copy', pattern: 'phase_blocks.gtf', overwrite: true
+    publishDir "${params.outdir}", mode: 'copy', pattern: 'phasing_stats.tsv', overwrite: true
+
+    input:
+    set file(vcf), file(idx) from indexed_merged_vcf_ch
+
+    output:
+    file 'phase_blocks.gtf'
+    file 'phasing_stats.tsv'
+
+    script:
+    """
+    whatshap stats $vcf --gtf phase_blocks.gtf --tsv phasing_stats.tsv
     """
 }
