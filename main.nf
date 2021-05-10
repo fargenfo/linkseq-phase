@@ -203,8 +203,10 @@ process index_and_zip_vcf {
 }
 
 // Merge VCFs into a multi-sample VCF, and compress and index it.
-// FIXME: Nextflow can't deal with "0\|0", because of the backslash, so I used a double backslash,
-// but I'm not sure if this will work.
+// NOTE: missing genotypes will be coded as ".". VCFtools does not adhere to the variant format
+// of a given variant when merging a missing genotype. It is possible to use "--ref-for-missing"
+// to use a pre-defined missing genotype string, but this will be the same for any variant, regardless
+// of variant genotype format and regardless of ploidy.
 process merge_phased_vcf {
     publishDir "${params.outdir}/phased_vcf", mode: 'copy', overwrite: true
 
@@ -219,7 +221,7 @@ process merge_phased_vcf {
     vcf_list_str = (vcf_list as List)
         .join(' ')  // Join paths in single string.
     """
-    vcf-merge --ref-for-missing 0\\|0 $vcf_list_str > "phased_merged.vcf"
+    vcf-merge $vcf_list_str > "phased_merged.vcf"
     bgzip -c "phased_merged.vcf" > "phased_merged.vcf.gz"
     """
 }
