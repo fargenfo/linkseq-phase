@@ -83,16 +83,35 @@ process get_sample_vcf {
 // Remove the "PP" field from the VCF.
 // PP is the posterior probability of the possible genotypes, calculated by GATK's CalculateGenotypePosteriors.
 // VCFtools doesn't know how to merge this field, and raises an error, therefore we remove it here.
-process reformat_vcf {
+process reformat_vcf_pp {
     input:
     set sample, file(vcf), file(idx) from vcf_sample_ch
 
     output:
-    set sample, file("reformat.vcf") into vcf_reformat_ch
+    set sample, file("reformat_pp.vcf") into vcf_reformat_pp_ch
 
     script:
     """
-    remove_format_field.py --vcf $vcf --field PP > reformat.vcf
+    remove_format_field.py --vcf $vcf --field PP > reformat_pp.vcf
+    """
+}
+
+// Remove the "PL" field, for a similar reason as the "PP" field above.
+// NOTE:
+// The VCF contains sites where there is a reference allele and a missing alternate allele ("."). This is because
+// the genotype is homozygous reference. In these cases, the PL field contains only one likelihood, because there
+// is only one possible genotype. However, VCFtools insists there are two alleles (even though one of them is
+// missing), and so there are three possible genotypes and therefore three likelihoods.
+process reformat_vcf_pl {
+    input:
+    set sample, file(vcf), file(idx) from vcf_reformat_pp_ch
+
+    output:
+    set sample, file("reformat_pl.vcf") into vcf_reformat_pl_ch
+
+    script:
+    """
+    remove_format_field.py --vcf $vcf --field PL > reformat_pl.vcf
     """
 }
 
@@ -100,7 +119,7 @@ process reformat_vcf {
 // be able to handle these.
 process remove_nocalls {
     input:
-    set sample, file(vcf) from vcf_reformat_ch
+    set sample, file(vcf) from vcf_reformat_pl_ch
 
     output:
     set sample, file("nocalls_removed.vcf") into vcf_nocalls_removed_ch
