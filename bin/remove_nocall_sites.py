@@ -44,8 +44,8 @@ with open(vcf) as fid:
             # Get the genotype value.
             GT = sample_fields[0]
             
-            # If the variant is not called in the sample, it is coded as "./.".
-            if GT == './.':
+            # If the variant is not called in the sample, it is coded as "./." or ".|.".
+            if GT == './.' or GT == '.|.':
                 continue
             
             print(line)
