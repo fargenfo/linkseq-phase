@@ -104,7 +104,7 @@ process reformat_vcf_pp {
 // missing), and so there are three possible genotypes and therefore three likelihoods.
 process reformat_vcf_pl {
     input:
-    set sample, file(vcf), file(idx) from vcf_reformat_pp_ch
+    set sample, file(vcf) from vcf_reformat_pp_ch
 
     output:
     set sample, file("reformat_pl.vcf") into vcf_reformat_pl_ch
