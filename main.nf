@@ -131,17 +131,17 @@ process remove_nocalls {
 }
 
 // Make a channel with (sample ID, VCF, VCF index, BAM, BAM index) tuples.
-vcf_nocalls_removed_ch.join(bam_paths_process_ch).into { data_extract_ch; data_link_ch; data_phase_ch }
+vcf_nocalls_removed_ch.join(bam_paths_process_ch).set { data_extract_hairs_ch }
 
 // NOTE: HapCUT2 does not accept compressed VCFs.
 
 // Convert BAM file to the compact fragment file format containing only haplotype-relevant information.
 process extract_hairs {
     input:
-    set sample, file(vcf), file(bam), file(bai) from data_extract_ch
+    set sample, file(vcf), file(bam), file(bai) from data_extract_hairs_ch
 
     output:
-    set sample, file("unlinked_fragment") into unlinked_fragments_ch
+    set sample, file(vcf), file(bam), file(bai), file("unlinked_fragment") into data_link_fragments_ch
 
     script:
     """
@@ -149,16 +149,13 @@ process extract_hairs {
     """
 }
 
-// Add unlinked fragment file to tuple for next process.
-data_link_ch = data_link_ch.join(unlinked_fragments_ch)
-
 // Use LinkFragments to link fragments into barcoded molecules.
 process link_fragments {
     input:
-    set sample, file(vcf), file(bam), file(bai), file(unlinked_fragments) from data_link_ch
+    set sample, file(vcf), file(bam), file(bai), file(unlinked_fragments) from data_link_fragments_ch
 
     output:
-    set sample, file("linked_fragments") into linked_fragments_ch
+    set sample, file(vcf), file(bam), file(bai), file('linked_fragments') into data_phase_vcf_ch
 
     script:
     """
@@ -166,17 +163,12 @@ process link_fragments {
     """
 }
 
-// Add linked fragment file to tuple for next process.
-data_phase_ch = data_phase_ch.join(linked_fragments_ch)
-
 // Use HAPCUT2 to assemble fragment file into haplotype blocks.
-// NOTE: this step may prune some low confidence genotypes, introducing no-calls into the dataset.
 process phase_vcf {
     input:
-    set sample, file(vcf), file(bam), file(bai), file(linked_fragments) from data_phase_ch
+    set sample, file(vcf), file(bam), file(bai), file(linked_fragments) from data_phase_vcf_ch
 
     output:
-    file "haplotypes" into haplotypes_ch
     set sample, file("haplotypes.phased.VCF") into phased_vcf_ch
 
     script:
