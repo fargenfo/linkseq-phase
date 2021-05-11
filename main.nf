@@ -192,7 +192,7 @@ process index_and_zip_vcf {
     set sample, file(vcf) from phased_vcf_ch
 
     output:
-    set sample, file("phased.vcf.gz"), file("phased.vcf.gz.tbi") into phased_vcf_haplotag_ch
+    set sample, file("phased.vcf.gz"), file("phased.vcf.gz.tbi") into phased_vcf_indexed_ch
     file "phased.vcf.gz" into phased_vcf_merge_ch
 
     script:
@@ -234,7 +234,7 @@ process index_merged_vcf {
     file(vcf) from merged_vcf_ch
 
     output:
-    set file('*.vcf.gz'), file("*.vcf.gz.tbi") into indexed_merged_vcf_ch
+    file "*.vcf.gz.tbi" into indexed_merged_vcf_ch
 
     script:
     """
@@ -245,11 +245,11 @@ process index_merged_vcf {
 // Get basic statistics about haplotype phasing blocks.
 // NOTE: provide a list of reference chromosome sizes to get N50.
 process phasing_stats {
-    publishDir "${params.outdir}", mode: 'copy', pattern: 'phase_blocks.gtf', overwrite: true
-    publishDir "${params.outdir}", mode: 'copy', pattern: 'phasing_stats.tsv', overwrite: true
+    publishDir "${params.outdir}/phasing_stats/$sample", mode: 'copy', pattern: 'phase_blocks.gtf', overwrite: true
+    publishDir "${params.outdir}/phasing_stats/$sample", mode: 'copy', pattern: 'phasing_stats.tsv', overwrite: true
 
     input:
-    set file(vcf), file(idx) from indexed_merged_vcf_ch
+    set sample, file(vcf), file(idx) from phased_vcf_indexed_ch
 
     output:
     file 'phase_blocks.gtf'
@@ -257,6 +257,6 @@ process phasing_stats {
 
     script:
     """
-    whatshap stats $vcf --gtf phase_blocks.gtf --tsv phasing_stats.tsv
+    whatshap stats $vcf --sample $sample --gtf phase_blocks.gtf --tsv phasing_stats.tsv
     """
 }
