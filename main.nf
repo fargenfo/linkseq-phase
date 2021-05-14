@@ -10,10 +10,18 @@ params.reference = null
 params.outdir = null
 params.help = false
 
-// TODO: make help string
 // Help message
 helpMessage = """
+Phase a multi sample VCF using HapCUT2. For more information see code repository: https://github.com/olavurmortensen/linkseq-phase
+
+Usage example:
+nextflow run olavurmortensen/linkseq-phase --vcf [path to VCF] --bam_paths [path to CSV with BAM paths] \
+    --reference [path to FASTA  reference] --outir [path to outdir]
+
 Parameters:
+--vcf               Path to multi-sample indexed VCF.
+--bam_paths         Path to CSV with the following columns: sample,bam_path,bai_path.
+--reference         Path to FASTA reference file.
 --outdir            Desired path/name of folder to store output in.
 """.stripIndent()
 
@@ -63,7 +71,6 @@ process get_sample_vcf {
     val sample from bam_sample_names_ch
 
     output:
-    //set sample, file("sample.vcf") into vcf_extract_ch, vcf_link_ch, vcf_phase_ch
     set sample, file("sample.vcf"), file("sample.vcf.idx") into vcf_sample_ch
 
     script:
@@ -130,7 +137,7 @@ process remove_nocalls {
     """
 }
 
-// Make a channel with (sample ID, VCF, VCF index, BAM, BAM index) tuples.
+// Make a channel with (sample ID, VCF, BAM, BAM index) tuples.
 vcf_nocalls_removed_ch.join(bam_paths_process_ch).set { data_extract_hairs_ch }
 
 // NOTE: HapCUT2 does not accept compressed VCFs.
