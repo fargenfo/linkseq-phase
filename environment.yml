@@ -10,7 +10,7 @@ dependencies:
   - nextflow=21.04
   - samtools=1.10
   - gatk4=4.1.0.0
-  - hapcut2=1.3
+  - hapcut2=1.2
   - whatshap=0.18
   - vcftools=0.1
   - perl-vcftools-vcf=0.1
