@@ -259,3 +259,31 @@ process phasing_stats {
     whatshap stats $vcf --sample $sample --gtf phase_blocks.gtf --tsv phasing_stats.tsv
     """
 }
+
+workflow.onComplete {
+    log.info "L I N K S E Q   P H A S E"
+    log.info "================================="
+    log.info "bam_paths          : ${params.bam_paths}"
+    log.info "vcf                : ${params.vcf}"
+    log.info "reference          : ${params.reference}"
+    log.info "outdir             : ${params.outdir}"
+    log.info "================================="
+    log.info "Command line        : ${workflow.commandLine}"
+    log.info "Profile             : ${workflow.profile}"
+    log.info "Project dir         : ${workflow.projectDir}"
+    log.info "Launch dir          : ${workflow.launchDir}"
+    log.info "Work dir            : ${workflow.workDir}"
+    log.info "Container engine    : ${workflow.containerEngine}"
+    log.info "================================="
+    log.info "Project             : $workflow.projectDir"
+    log.info "Git info            : $workflow.repository - $workflow.revision [$workflow.commitId]"
+    log.info "Cmd line            : $workflow.commandLine"
+    log.info "Manifest version    : $workflow.manifest.version"
+    log.info "================================="
+    log.info "Completed at        : ${workflow.complete}"
+    log.info "Duration            : ${workflow.duration}"
+    log.info "Success             : ${workflow.success}"
+    log.info "Exit status         : ${workflow.exitStatus}"
+    log.info "Error report        : ${(workflow.errorReport ?: '-')}"
+    log.info "================================="
+}
