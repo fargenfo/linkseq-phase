@@ -122,7 +122,7 @@ process reformat_vcf_pl {
     """
 }
 
-// Remove no-call variants (coded as "./.") from the VCF, as HapCUT2 doesn't seem to
+// Remove no-call variants from the VCF, as HapCUT2 doesn't seem to
 // be able to handle these.
 process remove_nocalls {
     input:
@@ -133,6 +133,7 @@ process remove_nocalls {
 
     script:
     """
+    # See 'remove_nocall_sites.py' script in bin folder.
     remove_nocall_sites.py --vcf $vcf > nocalls_removed.vcf
     """
 }
