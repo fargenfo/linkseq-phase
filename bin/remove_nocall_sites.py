@@ -44,8 +44,12 @@ with open(vcf) as fid:
             # Get the genotype value.
             GT = sample_fields[0]
             
-            # If the variant is not called in the sample, it is coded as "./." or ".|.".
-            if GT == './.' or GT == '.|.':
+            # If the variant is no-call, skip it.
+            # Diploid no-call variants are usually coded as "./.". Sometimes they may be coded as ".|.", as a phased no-call variant (for whatever reason).
+            # A no-call variant may also be coded as ".".
+            # We remove any variants containing a full stop in their genotype.
+            if GT == './.' or GT == '.|.' or '.':
+            if '.' in GT:
                 continue
             
             print(line)
