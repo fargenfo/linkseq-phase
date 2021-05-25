@@ -15,5 +15,6 @@ ENV PATH /opt/conda/envs/linkseq-phase/bin:$PATH
 
 # Pull the Nextflow pipeline.
 # The following command makes sure the nextflow pul command isn't cached.
-RUN CACHEBUST=$(date +%s)
+# Everytime the pipeline is updated, the build number below must be incremented.
+ARG BUILD=1
 RUN nextflow pull olavurmortensen/linkseq-phase
