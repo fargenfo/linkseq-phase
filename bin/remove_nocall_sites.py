@@ -48,7 +48,6 @@ with open(vcf) as fid:
             # Diploid no-call variants are usually coded as "./.". Sometimes they may be coded as ".|.", as a phased no-call variant (for whatever reason).
             # A no-call variant may also be coded as ".".
             # We remove any variants containing a full stop in their genotype.
-            if GT == './.' or GT == '.|.' or '.':
             if '.' in GT:
                 continue
             
