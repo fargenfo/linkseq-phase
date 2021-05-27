@@ -40,3 +40,7 @@ RUN cd /tmp/HapCUT2* && \
 
 # Add path to libraries.
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/lib
+
+# Copy all utility scripts to bin folder, and make sure they are executable.
+RUN cp /tmp/HapCUT2*/utilities/*.py /usr/local/bin && chmod +x /usr/local/bin/*.py
+
