@@ -37,3 +37,6 @@ RUN cd /tmp/htslib* && \
 RUN cd /tmp/HapCUT2* && \
     make && \
     make install
+
+# Add path to libraries.
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/lib
