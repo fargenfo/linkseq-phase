@@ -46,3 +46,8 @@ RUN cp /tmp/HapCUT2*/utilities/*.py /usr/local/bin && chmod +x /usr/local/bin/*.
 
 # Clean up the image by deleting some files.
 RUN rm -r /tmp/htslib* /tmp/HapCUT2* /tmp/c6481d*.zip
+
+# Install software to conda environment from YML file.
+COPY environment.yml /
+RUN conda env create -f /environment.yml && conda clean -a
+ENV PATH /opt/conda/envs/linkseq-phase/bin:$PATH
