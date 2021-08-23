@@ -62,10 +62,6 @@ reference = file(params.reference)
 
 // Extract a single sample from the VCF. This process is run once for each sample, splitting the
 // VCF into as many files as there are samples.
-// --remove-unused-alternates is used to avoid gentypes like "2/3", which HapCUT2 can't deal with.
-// --exclude-non-variants is used to exclude missing genotypes, formatted as "./.", which HapCUT2
-// can't deal with either. These two arguments don't take anything away from the data, as when
-// the samples are merged together, everything will be the same again.
 process get_sample_vcf {
     input:
     val sample from bam_sample_names_ch
@@ -80,7 +76,6 @@ process get_sample_vcf {
         -V $vcf \
         -R $reference \
         -sn $sample \
-        --remove-unused-alternates \
         -O "sample.vcf" \
         --tmp-dir=tmp \
         --java-options "-Xmx${task.memory.toGiga()}g -Xms${task.memory.toGiga()}g"
