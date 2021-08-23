@@ -229,11 +229,27 @@ process index_merged_vcf {
     file(vcf) from merged_vcf_ch
 
     output:
-    file "*.vcf.gz.tbi" into indexed_merged_vcf_ch
+    set file(vcf), file("*.vcf.gz.tbi") into indexed_merged_vcf_ch, indexed_merged_vcf_validate_ch
 
     script:
     """
     tabix $vcf
+    """
+}
+
+process validate_vcf {
+    publishDir "${params.outdir}", mode: 'copy', overwrite: true, saveAs: { filename -> "validation.log" }
+    input:
+    set file(vcf), file(idx) from indexed_merged_vcf_validate_ch
+
+    output:
+    file ".command.log" into validation_log_ch
+
+    script:
+    """
+    gatk ValidateVariants \
+        -V $vcf \
+        -R $reference
     """
 }
 
