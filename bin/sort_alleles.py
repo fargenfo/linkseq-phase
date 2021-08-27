@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys, argparse, logging
+from copy import copy  # Deep copy.
 
 logging.basicConfig(level=logging.INFO)
 
@@ -73,6 +74,9 @@ with open(vcf) as fid:
             ALLELES = [REF]
             ALLELES.extend(ALTS)
 
+            # Number of alleles at site.
+            n_alleles = len(ALLELES)
+
             # Get the FORMAT of the genotype field.
             format_column = columns[8]
 
@@ -93,10 +97,60 @@ with open(vcf) as fid:
             a1 = int(GT[0])
             a2 = int(GT[2])
 
-            if min(a1, a2) < 2:
+            # Get the "/" or "|" that separates the alleles in the genotype.
+            gt_sep = GT[1]
+
+            if max(a1, a2) < 2:
                 # The genotype does not need altering, because it is either 0/0, 0/1 or 1/1.
                 # Print the unaltered line.
                 print(line)
+
+            # We will reconstruct the variant in this dictionary.
+            new_dict = {}
+
+            if a1 != a2:
+                # Heterozygote genotype.
+                a_minor = min(a1, a2)
+                a_major = max(a1, a2)
+
+                # Make a deep copy of the allele list.
+                # Note that we will pop items out of this list so its length will change.
+                temp_alleles = copy(ALLELES)
+                # The new reference allele is the one corresponding to the smallest allele indicator.
+                new_dict['REF'] = temp_alleles.pop(a_minor)
+
+                # Sort the alternate alleles.
+                # Get the first alternate allele.
+                # Note the minus 1 is because the a_minor allele was popped.
+                first_alt = temp_alleles.pop(a_major - 1)
+                # Append the rest of the alternates to a list.
+                new_alts = [first_alt]
+                new_alts.extend(temp_alleles)
+                # Join the alleles by commas, as it is represented in the VCF.
+                new_alts = ','.join(new_alts)
+                # Finally, add to dict.
+                new_dict['ALT'] = new_alts
+
+                # The new genotype is either 0/1 or 0|1.
+                new_GT = '0' + gt_sep + '1'
+
+                new_fields = [new_GT]
+
+                # Go through each field in the genotype and sort the values if necessary.
+                for field_idx, field_name in enumerate(format_fields):
+                    if field_name == 'GT':
+                        # We already dealt with then genotype above.
+                        continue
+                    else:
+                        field_data = genotype_fields[field_idx]
+                        field_data = field_data.split(',')
+                        if len(field_data) == 1:
+                            # Only one value in the field, so we're done.
+                            new_fields.append(field_data)
+                        if len(field_data) == n_alleles:
+                            # One value per allele.
+
+
 
 
             # Join the fields with colons again.
