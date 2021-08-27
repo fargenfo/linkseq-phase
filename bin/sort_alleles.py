@@ -149,6 +149,17 @@ with open(vcf) as fid:
                             new_fields.append(field_data)
                         if len(field_data) == n_alleles:
                             # One value per allele.
+                            # Order the values in the same way as the allele list.
+                            sorted_field_data = []
+                            # The new reference allele first in the list.
+                            sorted_field_data.append(field_data.pop(a_minor))
+                            # The first of the alternate alleles second in the list.
+                            sorted_field_data.append(field_data.pop(a_major - 1))
+                            # Add the remaining values.
+                            sorted_field_data.extend(field_data)
+                        if len(field_data) == n_alleles * (n_alleles + 1) / 2:
+                            # One value per distinct genotype.
+                            # FIXME: how the **** do I do this?
 
 
 
