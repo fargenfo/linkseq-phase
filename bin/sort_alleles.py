@@ -65,8 +65,8 @@ with open(vcf) as fid:
             ALTS = ALTS.split(',')
 
             if len(ALTS) < 2:
+                # Output as is.
                 # The site is diallelic, and does not need altering.
-                # Print the unaltered line.
                 print(line)
                 continue
 
@@ -87,6 +87,13 @@ with open(vcf) as fid:
             # Get the sample genotype.
             GT_idx = format_fields.index('GT')
             GT = genotype_fields[GT_idx]
+            
+            if '.' in GT:
+                # Output as is.
+                # This is a no-call, the genotype is missing.
+                # The genotype should be one of the following: ., ./. or .|.
+                print(line)
+                continue
 
             # FIXME: I will definitely need to be smarter about parsing the genotype.
             # I can get inspiration from some of the other scripts.
@@ -97,75 +104,82 @@ with open(vcf) as fid:
             gt_sep = GT[1]
 
             if max(a1, a2) < 2:
+                # Output as is.
                 # The genotype does not need altering, because it is either 0/0, 0/1 or 1/1.
-                # Print the unaltered line.
                 print(line)
                 continue
 
             if a1 != a2:
                 # Heterozygote genotype.
+                # We will make new genotype 0/1 (or 0|1) and order the alleles and associated data accordingly.
                 a_minor = min(a1, a2)
                 a_major = max(a1, a2)
 
-                # Make a deep copy of the allele list.
-                # Note that we will pop items out of this list so its length will change.
-                temp_alleles = copy(ALLELES)
-                # The new reference allele is the one corresponding to the smallest allele indicator.
-                new_REF = temp_alleles.pop(a_minor)
-
-                # Sort the alternate alleles.
-                # Get the first alternate allele.
-                # Note the minus 1 is because the a_minor allele was popped.
-                first_alt = temp_alleles.pop(a_major - 1)
-                # Append the rest of the alternates to a list.
-                new_alts = [first_alt]
-                new_alts.extend(temp_alleles)
-                # Join the alleles by commas, as it is represented in the VCF.
-                new_ALTS = ','.join(new_alts)
-
                 # The new genotype is either 0/1 or 0|1.
                 new_GT = '0' + gt_sep + '1'
+            elif a1 == a2:
+                # Homozygous genotype.
+                # We will make the new genotype 1/1 (or 1|1) and order the alleles and associated data accordingly.
+                a_minor = 0
+                a_major = a1
 
-                new_fields = [new_GT]
+                # The new genotype is either 1/1 or 1|1.
+                new_GT = '1' + gt_sep + '1'
 
-                # Go through each field in the genotype and sort the values if necessary.
-                for field_idx, field_name in enumerate(format_fields):
-                    if field_name == 'GT':
-                        # We already dealt with then genotype above.
-                        continue
+            # Make a deep copy of the allele list.
+            # Note that we will pop items out of this list so its length will change.
+            temp_alleles = copy(ALLELES)
+            # The new reference allele is the one corresponding to the smallest allele indicator.
+            new_REF = temp_alleles.pop(a_minor)
+
+            # Sort the alternate alleles.
+            # Get the first alternate allele.
+            # Note the minus 1 is because the a_minor allele was popped.
+            first_alt = temp_alleles.pop(a_major - 1)
+            # Append the rest of the alternates to a list.
+            new_alts = [first_alt]
+            new_alts.extend(temp_alleles)
+            # Join the alleles by commas, as it is represented in the VCF.
+            new_ALTS = ','.join(new_alts)
+
+            new_fields = [new_GT]
+
+            # Go through each field in the genotype and sort the values if necessary.
+            for field_idx, field_name in enumerate(format_fields):
+                if field_name == 'GT':
+                    # We already dealt with then genotype above.
+                    continue
+                else:
+                    field_data = genotype_fields[field_idx]
+                    field_data = field_data.split(',')
+                    if len(field_data) == 1:
+                        # Only one value in the field, so we're done.
+                        sorted_field_data = copy(field_data)
+                    elif len(field_data) == n_alleles:
+                        # One value per allele.
+                        # Order the values in the same way as the allele list.
+                        sorted_field_data = []
+                        # The new reference allele first in the list.
+                        sorted_field_data.append(field_data.pop(a_minor))
+                        # The first of the alternate alleles second in the list.
+                        sorted_field_data.append(field_data.pop(a_major - 1))
+                        # Add the remaining values.
+                        sorted_field_data.extend(field_data)
+                    elif len(field_data) == n_alleles * (n_alleles + 1) / 2:
+                        # One value per distinct genotype.
+                        # FIXME: how the **** do I do this?
+                        logging.warning('Outputting field {name} as is, with no re-ordering. This is a genotype level field with n * (n + 1) / 2 values.'.format(name=field_name))
+                        sorted_field_data = copy(field_data)
                     else:
-                        field_data = genotype_fields[field_idx]
-                        field_data = field_data.split(',')
-                        if len(field_data) == 1:
-                            # Only one value in the field, so we're done.
-                            sorted_field_data = copy(field_data)
-                        elif len(field_data) == n_alleles:
-                            # One value per allele.
-                            # Order the values in the same way as the allele list.
-                            sorted_field_data = []
-                            # The new reference allele first in the list.
-                            sorted_field_data.append(field_data.pop(a_minor))
-                            # The first of the alternate alleles second in the list.
-                            sorted_field_data.append(field_data.pop(a_major - 1))
-                            # Add the remaining values.
-                            sorted_field_data.extend(field_data)
-                        elif len(field_data) == n_alleles * (n_alleles + 1) / 2:
-                            # One value per distinct genotype.
-                            # FIXME: how the **** do I do this?
-                            logging.warning('Outputting field {name} as is, with no re-ordering. This is a genotype level field with n * (n + 1) / 2 values.'.format(name=field_name))
-                            sorted_field_data = copy(field_data)
-                        else:
-                            # Something else.
-                            # This shouldn't really happen.
-                            logging.warning('Field {name} has an unexpected number of values ({n}).'.format(name=field_name, n=len(field_data)))
-                            sorted_field_data = copy(field_data)
+                        # Something else.
+                        # This shouldn't really happen.
+                        logging.warning('Field {name} has an unexpected number of values ({n}).'.format(name=field_name, n=len(field_data)))
+                        sorted_field_data = copy(field_data)
 
-                        # Append the re-ordered field data to the list.
-                        sorted_field_data = ','.join(sorted_field_data)
-                        new_fields.append(sorted_field_data)
-                        new_SAMPLE = ':'.join(new_fields)
-
-
+                    # Append the re-ordered field data to the list.
+                    sorted_field_data = ','.join(sorted_field_data)
+                    new_fields.append(sorted_field_data)
+                    new_SAMPLE = ':'.join(new_fields)
 
 
             # Join all the columns by tabs to form the new row.
