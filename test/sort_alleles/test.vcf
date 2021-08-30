@@ -1,0 +1,13 @@
+#CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  FN000001
+chr1   1001        .       T       G,C     .       PASS     .  GT:AD:DP:PL       0/0:1,2,3:6:1,2,3,4,5,6
+chr1   1002        .       T       G,C     .       PASS     .  GT:AD:DP:PL       0/1:1,2,3:6:1,2,3,4,5,6
+chr1   1003        .       T       G,C     .       PASS     .  GT:AD:DP:PL       0/2:1,2,3:6:1,2,3,4,5,6
+chr1   1004        .       T       G,C     .       PASS     .  GT:AD:DP:PL       1/1:1,2,3:6:1,2,3,4,5,6
+chr1   1005        .       T       G,C     .       PASS     .  GT:AD:DP:PL       1/2:1,2,3:6:1,2,3,4,5,6
+chr1   1006        .       T       G,C     .       PASS     .  GT:AD:DP:PL       2/2:1,2,3:6:1,2,3,4,5,6
+chr1   1007        .       T       G     .       PASS     .  GT:AD:DP:PL       0/0:1,2:6:1,2,3
+chr1   1008        .       T       G     .       PASS     .  GT:AD:DP:PL       0/1:1,2:6:1,2,3
+chr1   1009        .       T       G     .       PASS     .  GT:AD:DP:PL       1/0:1,2:6:1,2,3
+chr1   1010        .       T       G     .       PASS     .  GT:AD:DP:PL       1/1:1,2:6:1,2,3
+chr1   1006        .       T       G,C     .       PASS     .  GT:AD:DP:PL       .:.,.,.:.:.,.,.,.,.,.
+chr1   1006        .       T       G,C     .       PASS     .  GT:AD:DP:PL       ./.:.,.,.:.:.,.,.,.,.,.

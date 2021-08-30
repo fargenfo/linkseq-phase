@@ -53,14 +53,14 @@ with open(vcf) as fid:
             line = line.strip()
 
             # Split the line into columns.
-            columns = line.split('\t')
+            columns = line.split()
 
-            # Get the reference allele.
-            REF = column[3]
+            assert len(columns) == 10, 'Expecting a single-sample VCF, but it contains multiple samples. Exiting. Offending line: \n' + line
 
-            # Get the list of alternate alleles.
-            ALTS = column[4]
-            # Split into a list.
+            CHROM, POS, ID, REF, ALTS, QUAL, FILTER, INFO, FORMAT, SAMPLE = columns
+
+
+            # Split ALTS into a list.
             # Note that if there is only one alt allele, ALTS will be a list with a single element.
             ALTS = ALTS.split(',')
 
@@ -68,6 +68,7 @@ with open(vcf) as fid:
                 # The site is diallelic, and does not need altering.
                 # Print the unaltered line.
                 print(line)
+                continue
 
             # Make a list of alleles, where the first element is the reference allele, and the remaining
             # are the alternate alleles.
@@ -77,16 +78,11 @@ with open(vcf) as fid:
             # Number of alleles at site.
             n_alleles = len(ALLELES)
 
-            # Get the FORMAT of the genotype field.
-            format_column = columns[8]
-
             # Split the FORMAT column into individual fields which are separated by colons.
-            format_fields = format_column.split(':')
+            format_fields = FORMAT.split(':')
 
-            # The sample (or genotype) column.
-            genotype_fields = columns[9]
             # Split into a list.
-            genotype_fields = genotype_fields.split(':')
+            genotype_fields = SAMPLE.split(':')
 
             # Get the sample genotype.
             GT_idx = format_fields.index('GT')
@@ -104,9 +100,7 @@ with open(vcf) as fid:
                 # The genotype does not need altering, because it is either 0/0, 0/1 or 1/1.
                 # Print the unaltered line.
                 print(line)
-
-            # We will reconstruct the variant in this dictionary.
-            new_dict = {}
+                continue
 
             if a1 != a2:
                 # Heterozygote genotype.
@@ -117,7 +111,7 @@ with open(vcf) as fid:
                 # Note that we will pop items out of this list so its length will change.
                 temp_alleles = copy(ALLELES)
                 # The new reference allele is the one corresponding to the smallest allele indicator.
-                new_dict['REF'] = temp_alleles.pop(a_minor)
+                new_REF = temp_alleles.pop(a_minor)
 
                 # Sort the alternate alleles.
                 # Get the first alternate allele.
@@ -127,9 +121,7 @@ with open(vcf) as fid:
                 new_alts = [first_alt]
                 new_alts.extend(temp_alleles)
                 # Join the alleles by commas, as it is represented in the VCF.
-                new_alts = ','.join(new_alts)
-                # Finally, add to dict.
-                new_dict['ALT'] = new_alts
+                new_ALTS = ','.join(new_alts)
 
                 # The new genotype is either 0/1 or 0|1.
                 new_GT = '0' + gt_sep + '1'
@@ -146,8 +138,8 @@ with open(vcf) as fid:
                         field_data = field_data.split(',')
                         if len(field_data) == 1:
                             # Only one value in the field, so we're done.
-                            new_fields.append(field_data)
-                        if len(field_data) == n_alleles:
+                            sorted_field_data = copy(field_data)
+                        elif len(field_data) == n_alleles:
                             # One value per allele.
                             # Order the values in the same way as the allele list.
                             sorted_field_data = []
@@ -157,21 +149,27 @@ with open(vcf) as fid:
                             sorted_field_data.append(field_data.pop(a_major - 1))
                             # Add the remaining values.
                             sorted_field_data.extend(field_data)
-                        if len(field_data) == n_alleles * (n_alleles + 1) / 2:
+                        elif len(field_data) == n_alleles * (n_alleles + 1) / 2:
                             # One value per distinct genotype.
                             # FIXME: how the **** do I do this?
+                            logging.warning('Outputting field {name} as is, with no re-ordering. This is a genotype level field with n * (n + 1) / 2 values.'.format(name=field_name))
+                            sorted_field_data = copy(field_data)
+                        else:
+                            # Something else.
+                            # This shouldn't really happen.
+                            logging.warning('Field {name} has an unexpected number of values ({n}).'.format(name=field_name, n=len(field_data)))
+                            sorted_field_data = copy(field_data)
+
+                        # Append the re-ordered field data to the list.
+                        sorted_field_data = ','.join(sorted_field_data)
+                        new_fields.append(sorted_field_data)
+                        new_SAMPLE = ':'.join(new_fields)
 
 
 
 
-            # Join the fields with colons again.
-            new_format_column = ':'.join(format_fields)
+            # Join all the columns by tabs to form the new row.
+            new_row = '\t'.join([CHROM, POS, ID, new_REF, new_ALTS, QUAL, FILTER, INFO, FORMAT, new_SAMPLE])
 
-            #new_row = ?????
+            print(new_row)
 
-            # Make the new line by joining all the columns by tabs.
-            new_line = '\t'.join(new_row)
-
-            print(new_line)
-
-logging.warning('???')
