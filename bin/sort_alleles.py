@@ -42,6 +42,7 @@ args = parser.parse_args()
 
 vcf = args.vcf
 
+logging.warning('This script is a work-in-progress and should not be used as is. WARNING.')
 
 with open(vcf) as fid:
     for line in fid:
