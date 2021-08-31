@@ -1,4 +1,6 @@
-# LinkSeq Phase -- Multi-sample linked-read phasing
+# LinkSeq Phase -- Multi-sample linked-read phasing [WIP]
+
+*NOTE:* This pipeline is a work-in-progress and should not be used as is.
 
 [![Docker build](https://img.shields.io/badge/Docker%20build-Available-informational)](https://hub.docker.com/repository/docker/olavurmortensen/linkseq-phase)
 
